@@ -13,6 +13,11 @@
   <nav class="navbar navbar-dark bg-dark mb-4">
     <div class="container">
       <a class="navbar-brand fw-bold" href="{% url 'store:product_list' %}">🛒 ShopLab</a>
+      <form class="d-flex" method="get" action="{% url 'store:product_list' %}" role="search">
+        <input class="form-control me-2" type="search" name="q"
+               placeholder="Search products..." value="{{ request.GET.q }}">
+        <button class="btn btn-outline-light" type="submit">Search</button>
+      </form>
     </div>
   </nav>
 
@@ -24,7 +29,7 @@
     ShopLab · Portfolio project by Arib Uz Zaman
     {% usd_to_bdt_rate as rate %}
     {% if rate %}
-      <div class="small mt-1">Prices converted from USD at today's rate: $1 = ৳{{ rate|floatformat:2 }}</div>
+      <div class="small mt-1">Prices are estimates, converted from USD at today's exchange rate ($1 = ৳{{ rate|floatformat:2 }})</div>
     {% endif %}
   </footer>
 

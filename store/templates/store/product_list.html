@@ -1,36 +1,109 @@
 {% extends "base.html" %}
 {% load currency %}
 
-{% block title %}All Products · ShopLab{% endblock %}
+{% block title %}Products · ShopLab{% endblock %}
 
 {% block content %}
-<h1 class="h3 mb-4">All Products</h1>
+<div class="row g-4">
 
-<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
-  {% for product in products %}
-    <div class="col">
-      <div class="card h-100 shadow-sm">
-        <img src="{{ product.thumbnail }}" class="card-img-top p-3" alt="{{ product.title }}"
-             loading="lazy" style="height: 200px; object-fit: contain;">
-        <div class="card-body d-flex flex-column">
-          <small class="text-muted">{{ product.category.name }}</small>
-          <h2 class="h6 card-title mt-1">
-            <a href="{{ product.get_absolute_url }}" class="stretched-link text-decoration-none text-dark">
-              {{ product.title }}
-            </a>
-          </h2>
-          <div class="mt-auto">
-            <span class="fw-bold">{{ product.discounted_price|bdt }}</span>
-            {% if product.discount_percentage > 0 %}
-              <small class="text-muted text-decoration-line-through ms-1">{{ product.price|bdt }}</small>
-            {% endif %}
-            <div class="small text-warning">★ {{ product.rating|floatformat:1 }}</div>
+  <!-- Sidebar: categories -->
+  <aside class="col-lg-3">
+    <h2 class="h6 text-uppercase text-muted">Categories</h2>
+    <div class="list-group">
+      <a href="{% querystring category=None page=None %}"
+         class="list-group-item list-group-item-action {% if not active_category %}active{% endif %}">
+        All categories
+      </a>
+      {% for cat in categories %}
+        <a href="{% querystring category=cat.slug page=None %}"
+           class="list-group-item list-group-item-action d-flex justify-content-between
+                  {% if active_category == cat %}active{% endif %}">
+          {{ cat.name }}
+          <span class="badge bg-secondary rounded-pill">{{ cat.product_count }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- Products -->
+  <section class="col-lg-9">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-0">
+          {% if query %}Results for "{{ query }}"
+          {% elif active_category %}{{ active_category.name }}
+          {% else %}All Products{% endif %}
+        </h1>
+        <small class="text-muted">{{ total }} product{{ total|pluralize }}</small>
+      </div>
+
+      <!-- Sort: a GET form, so the sorted page can be bookmarked. Hidden inputs keep the current filters. -->
+      <form method="get" class="d-flex align-items-center gap-2">
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        {% if active_category %}<input type="hidden" name="category" value="{{ active_category.slug }}">{% endif %}
+        <label for="sort" class="small text-muted text-nowrap">Sort by</label>
+        <select id="sort" name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="name" {% if sort == "name" %}selected{% endif %}>Name (A–Z)</option>
+          <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
+          <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
+          <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+        </select>
+        <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Apply</button></noscript>
+      </form>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-3 g-4">
+      {% for product in page_obj %}
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            <img src="{{ product.thumbnail }}" class="card-img-top p-3" alt="{{ product.title }}"
+                 loading="lazy" style="height: 200px; object-fit: contain;">
+            <div class="card-body d-flex flex-column">
+              <small class="text-muted">{{ product.category.name }}</small>
+              <h2 class="h6 card-title mt-1">
+                <a href="{{ product.get_absolute_url }}" class="stretched-link text-decoration-none text-dark">
+                  {{ product.title }}
+                </a>
+              </h2>
+              <div class="mt-auto">
+                <span class="fw-bold">{{ product.discounted_price|bdt }}</span>
+                {% if product.discount_percentage > 0 %}
+                  <small class="text-muted text-decoration-line-through ms-1">{{ product.price|bdt }}</small>
+                {% endif %}
+                <div class="small text-warning">★ {{ product.rating|floatformat:1 }}</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      {% empty %}
+        <div class="col-12">
+          <p class="text-muted">No products found.
+            <a href="{% url 'store:product_list' %}">Clear filters</a></p>
+        </div>
+      {% endfor %}
     </div>
-  {% empty %}
-    <p>No products yet. Run <code>python manage.py import_products</code>.</p>
-  {% endfor %}
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <nav class="mt-4" aria-label="Product pages">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">‹ Prev</a>
+            </li>
+          {% endif %}
+          <li class="page-item disabled">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+          </li>
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next ›</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </section>
+
 </div>
 {% endblock %}
