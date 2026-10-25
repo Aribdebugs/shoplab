@@ -68,8 +68,8 @@ class Product(models.Model):
         return self.stock > 0
 
     @property
-    def final_price(self):
-        """Price after discount, rounded to cents."""
+    def discounted_price(self):
+        """Price after discount, rounded to 2 decimal places."""
         discount = self.price * self.discount_percentage / Decimal(100)
         return (self.price - discount).quantize(Decimal("0.01"))
 

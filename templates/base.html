@@ -1,0 +1,32 @@
+{% load currency %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ShopLab{% endblock %}</title>
+  <!-- Bootstrap: ready-made styling, loaded from a CDN (no install needed) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{% url 'store:product_list' %}">🛒 ShopLab</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="container text-center text-muted py-4 mt-5 border-top">
+    ShopLab · Portfolio project by Arib Uz Zaman
+    {% usd_to_bdt_rate as rate %}
+    {% if rate %}
+      <div class="small mt-1">Prices converted from USD at today's rate: $1 = ৳{{ rate|floatformat:2 }}</div>
+    {% endif %}
+  </footer>
+
+</body>
+</html>

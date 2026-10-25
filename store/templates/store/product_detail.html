@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load currency %}
+
+{% block title %}{{ product.title }} · ShopLab{% endblock %}
+
+{% block content %}
+<a href="{% url 'store:product_list' %}" class="d-inline-block mb-3 text-decoration-none">← Back to products</a>
+
+<div class="row g-4 mb-5">
+  <div class="col-md-5">
+    <div class="bg-white rounded shadow-sm p-3">
+      <img src="{{ product.thumbnail }}" class="img-fluid w-100" alt="{{ product.title }}"
+           style="max-height: 400px; object-fit: contain;">
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <small class="text-muted">{{ product.category.name }}</small>
+    <h1 class="h3 mt-1">{{ product.title }}</h1>
+    {% if product.brand %}
+      <p class="text-muted mb-2">by {{ product.brand }}</p>
+    {% endif %}
+
+    <div class="text-warning mb-3">★ {{ product.rating|floatformat:1 }}</div>
+
+    <div class="mb-3">
+      <span class="h4 fw-bold">{{ product.discounted_price|bdt }}</span>
+      {% if product.discount_percentage > 0 %}
+        <span class="text-muted text-decoration-line-through ms-2">{{ product.price|bdt }}</span>
+        <span class="badge bg-danger ms-2">−{{ product.discount_percentage|floatformat:0 }}%</span>
+      {% endif %}
+    </div>
+
+    {% if product.in_stock %}
+      <p class="text-success fw-semibold">In stock ({{ product.stock }} left)</p>
+    {% else %}
+      <p class="text-danger fw-semibold">Out of stock</p>
+    {% endif %}
+
+    <p>{{ product.description }}</p>
+  </div>
+</div>
+
+<section>
+  <h2 class="h4 mb-3">Reviews</h2>
+  {% for review in reviews %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <strong>{{ review.reviewer_name }}</strong>
+          <small class="text-muted">{{ review.created_at|date:"M j, Y" }}</small>
+        </div>
+        <div class="text-warning small">{{ review.rating }} ★</div>
+        <p class="mb-0 mt-2">{{ review.comment }}</p>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-muted">No reviews yet.</p>
+  {% endfor %}
+</section>
+{% endblock %}

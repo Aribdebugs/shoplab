@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load currency %}
+
+{% block title %}All Products · ShopLab{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">All Products</h1>
+
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+  {% for product in products %}
+    <div class="col">
+      <div class="card h-100 shadow-sm">
+        <img src="{{ product.thumbnail }}" class="card-img-top p-3" alt="{{ product.title }}"
+             loading="lazy" style="height: 200px; object-fit: contain;">
+        <div class="card-body d-flex flex-column">
+          <small class="text-muted">{{ product.category.name }}</small>
+          <h2 class="h6 card-title mt-1">
+            <a href="{{ product.get_absolute_url }}" class="stretched-link text-decoration-none text-dark">
+              {{ product.title }}
+            </a>
+          </h2>
+          <div class="mt-auto">
+            <span class="fw-bold">{{ product.discounted_price|bdt }}</span>
+            {% if product.discount_percentage > 0 %}
+              <small class="text-muted text-decoration-line-through ms-1">{{ product.price|bdt }}</small>
+            {% endif %}
+            <div class="small text-warning">★ {{ product.rating|floatformat:1 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No products yet. Run <code>python manage.py import_products</code>.</p>
+  {% endfor %}
+</div>
+{% endblock %}
