@@ -98,3 +98,76 @@ class ProductTests(TestCase):
         response = self.client.get(reverse("store:product_list"), {"sort": "DROP TABLE"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["sort"], "name")
+
+
+class CartTests(TestCase):
+
+    def setUp(self):
+        cache.set(CACHE_KEY, Decimal("120"), None)   # fixed rate, no real API call
+        category = Category.objects.create(name="Phones", slug="phones")
+        self.product = Product.objects.create(
+            external_id=1, title="Test Phone", slug="test-phone-1",
+            description="Test", category=category,
+            price=Decimal("100.00"), discount_percentage=Decimal("10.00"), stock=5,
+        )
+
+    def add(self, quantity):
+        """Helper: post to add-to-cart."""
+        return self.client.post(reverse("store:cart_add", args=[self.product.id]), {"quantity": quantity})
+
+    def cart(self):
+        return self.client.session.get("cart", {})
+
+    def test_add_to_cart_stores_quantity(self):
+        self.add(2)
+        self.assertEqual(self.client.session["cart"], {str(self.product.id): 2})
+
+    def test_adding_twice_sums_quantity(self):
+        self.add(2)
+        self.add(1)
+        self.assertEqual(self.cart(), {str(self.product.id): 3})
+
+    def test_quantity_capped_at_stock(self):
+        self.add(99)
+        self.assertEqual(self.cart(), {str(self.product.id): 5})
+
+    def test_cart_total_uses_discounted_price(self):
+        self.add(2)
+        response = self.client.get(reverse("store:cart_detail"))
+        self.assertEqual(response.context["total"], Decimal("180.00"))
+
+    def test_remove_from_cart(self):
+        self.add(2)
+        self.client.post(reverse("store:cart_remove", args=[self.product.id]))
+        self.assertEqual(self.cart(), {})
+
+    def test_update_to_zero_removes_item(self):
+        self.add(2)
+        self.client.post(reverse("store:cart_update", args=[self.product.id]), {"quantity": 0})
+        self.assertEqual(self.cart(), {})
+
+    def test_add_requires_post(self):
+        response = self.client.get(reverse("store:cart_add", args=[self.product.id]))
+        self.assertEqual(response.status_code, 405)
+
+    def test_invalid_quantity_defaults_to_one(self):
+        self.add("abc")
+        self.assertEqual(self.cart(), {str(self.product.id): 1})
+
+    def test_out_of_stock_product_not_added(self):
+        self.product.stock = 0
+        self.product.save()
+        self.add(1)
+        self.assertEqual(self.cart(), {})
+
+    def test_deleted_product_disappears_from_cart(self):
+        self.add(2)
+        self.product.delete()
+        response = self.client.get(reverse("store:cart_detail"))
+        self.assertEqual(response.context["items"], [])
+        self.assertEqual(self.cart(), {})   # navbar count drops to 0 too
+
+    def test_navbar_shows_cart_count(self):
+        self.add(3)
+        response = self.client.get(reverse("store:product_list"))
+        self.assertEqual(response.context["cart_count"], 3)
