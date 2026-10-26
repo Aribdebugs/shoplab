@@ -1,12 +1,17 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q
+from django.db import IntegrityError, transaction
+from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from orders.models import Order, OrderItem
+
 from .cart import Cart
+from .forms import ReviewForm
 from .models import Category, Product
 
 PRODUCTS_PER_PAGE = 12
@@ -72,14 +77,76 @@ def product_list(request):
     })
 
 
+def _has_purchased(user, product):
+    """True if the user has a non-cancelled order containing this product."""
+    if not user.is_authenticated:
+        return False
+    return (
+        OrderItem.objects
+        .filter(order__user=user, product=product)
+        .exclude(order__status=Order.Status.CANCELLED)
+        .exists()
+    )
+
+
 def product_detail(request, slug):
     """One product page with its reviews."""
     product = get_object_or_404(Product.objects.select_related("category"), slug=slug)
     reviews = product.reviews.all()
+
+    already_reviewed = (
+        request.user.is_authenticated
+        and reviews.filter(user=request.user).exists()
+    )
+    can_review = not already_reviewed and _has_purchased(request.user, product)
+
     return render(request, "store/product_detail.html", {
         "product": product,
         "reviews": reviews,
+        "can_review": can_review,
+        "already_reviewed": already_reviewed,
+        "review_form": ReviewForm() if can_review else None,
     })
+
+
+@login_required
+@require_POST
+def add_review(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+
+    if not _has_purchased(request.user, product):
+        messages.error(request, "Only customers who bought this product can review it.")
+        return redirect(product.get_absolute_url())
+
+    if product.reviews.filter(user=request.user).exists():
+        messages.error(request, "You've already reviewed this product.")
+        return redirect(product.get_absolute_url())
+
+    form = ReviewForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Please choose a rating and write a comment.")
+        return redirect(product.get_absolute_url())
+
+    review = form.save(commit=False)   # build the object but don't save it yet
+    review.product = product
+    review.user = request.user
+    review.reviewer_name = request.user.username
+    try:
+        # atomic: if the database rejects the row, only this block is undone
+        with transaction.atomic():
+            review.save()
+    except IntegrityError:
+        # A double-click got past the check above; the database constraint stopped the duplicate
+        messages.error(request, "You've already reviewed this product.")
+        return redirect(product.get_absolute_url())
+
+    # The database calculates the new average in one query
+    avg = product.reviews.aggregate(Avg("rating"))["rating__avg"]
+    product.rating = Decimal(str(round(avg, 2)))
+    product.save(update_fields=["rating"])   # saves ONLY that column
+
+    messages.success(request, "Thanks for your review!")
+    return redirect(product.get_absolute_url())
 
 
 def _read_quantity(request, default=1):
