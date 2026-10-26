@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load currency %}
+
+{% block title %}Your Cart · ShopLab{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Your Cart</h1>
+
+{% if items %}
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th style="width: 180px;">Quantity</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>
+                <a href="{{ item.product.get_absolute_url }}"
+                   class="d-flex align-items-center gap-3 text-decoration-none text-dark">
+                  <img src="{{ item.product.thumbnail }}" alt="" width="60" height="60"
+                       class="rounded bg-white" style="object-fit: contain;">
+                  <span>{{ item.product.title }}</span>
+                </a>
+              </td>
+              <td class="text-nowrap">{{ item.unit_price|bdt }}</td>
+              <td>
+                <form method="post" action="{% url 'store:cart_update' item.product.id %}" class="d-flex gap-2">
+                  {% csrf_token %}
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="0"
+                         max="{{ item.product.stock }}" class="form-control form-control-sm"
+                         aria-label="Quantity of {{ item.product.title }}">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
+                </form>
+              </td>
+              <td class="text-nowrap fw-bold">{{ item.line_total|bdt }}</td>
+              <td>
+                <form method="post" action="{% url 'store:cart_remove' item.product.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger"
+                          aria-label="Remove {{ item.product.title }}">✕</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <a href="{% url 'store:product_list' %}">← Continue shopping</a>
+      <div class="text-end">
+        <div class="h5 mb-2">Total: <strong>{{ total|bdt }}</strong></div>
+        <button class="btn btn-dark" disabled>Checkout (coming Day 6)</button>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="text-center py-5">
+    <p class="text-muted">Your cart is empty.</p>
+    <a class="btn btn-dark" href="{% url 'store:product_list' %}">Start shopping</a>
+  </div>
+{% endif %}
+{% endblock %}

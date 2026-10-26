@@ -1,7 +1,12 @@
+from decimal import Decimal
+
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
+from .cart import Cart
 from .models import Category, Product
 
 PRODUCTS_PER_PAGE = 12
@@ -75,3 +80,46 @@ def product_detail(request, slug):
         "product": product,
         "reviews": reviews,
     })
+
+
+def _read_quantity(request, default=1):
+    """Safely read a quantity from the submitted form. Bad input becomes the default."""
+    try:
+        return int(request.POST.get("quantity", default))
+    except (TypeError, ValueError):
+        return default
+
+
+def cart_detail(request):
+    cart = Cart(request)
+    items = list(cart)   # run the database query ONCE, reuse for the list and the total
+    total = sum((item["line_total"] for item in items), Decimal("0.00"))
+    return render(request, "store/cart.html", {"items": items, "total": total})
+
+
+@require_POST
+def cart_add(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if not product.in_stock:
+        messages.error(request, f"Sorry, {product.title} is out of stock.")
+        return redirect(product.get_absolute_url())
+
+    quantity = max(1, _read_quantity(request))   # at least 1
+    Cart(request).add(product, quantity)
+    messages.success(request, f"Added {product.title} to your cart.")
+    return redirect("store:cart_detail")
+
+
+@require_POST
+def cart_update(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    Cart(request).add(product, _read_quantity(request), override=True)   # 0 removes it
+    return redirect("store:cart_detail")
+
+
+@require_POST
+def cart_remove(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    Cart(request).remove(product)
+    messages.info(request, f"Removed {product.title} from your cart.")
+    return redirect("store:cart_detail")
