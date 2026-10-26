@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load currency %}
+
+{% block title %}Order #{{ order.id }} · ShopLab{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:account' %}" class="d-inline-block mb-3 text-decoration-none">← View all orders</a>
+
+<div class="d-flex flex-wrap align-items-center gap-3 mb-1">
+  <h1 class="h3 mb-0">Order #{{ order.id }}</h1>
+  <span class="badge bg-{{ order.status_color }}">{{ order.get_status_display }}</span>
+</div>
+<p class="text-muted mb-4">Placed {{ order.created_at|date:"M j, Y, g:i a" }}</p>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items.all %}
+              <tr>
+                <td>
+                  {% if item.product %}
+                    <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none">{{ item.product_title }}</a>
+                  {% else %}
+                    {{ item.product_title }}   {# product deleted since: the snapshot title still shows #}
+                  {% endif %}
+                </td>
+                <td class="text-nowrap">{{ item.unit_price|bdt }}</td>
+                <td>{{ item.quantity }}</td>
+                <td class="text-nowrap text-end">{{ item.line_total|bdt }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="fw-bold">
+              <td colspan="3">Total</td>
+              <td class="text-nowrap text-end">{{ order.total|bdt }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-muted mb-3">Delivery details</h2>
+        <p class="mb-1 fw-semibold">{{ order.full_name }}</p>
+        <p class="mb-1">{{ order.phone }}</p>
+        <p class="mb-1">{{ order.address|linebreaksbr }}</p>
+        <p class="mb-3">{{ order.city }}</p>
+        <div class="alert alert-secondary small mb-0">💵 Payment: <strong>Cash on Delivery</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

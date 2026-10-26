@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load currency %}
+
+{% block title %}Checkout · ShopLab{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Checkout</h1>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">Delivery details</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              {{ field.label_tag }}
+              {{ field }}
+              {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+          <div class="alert alert-secondary small">💵 Payment: <strong>Cash on Delivery</strong></div>
+          <button class="btn btn-dark w-100" type="submit">Place order · {{ total|bdt }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Order summary</h2>
+        {% for item in items %}
+          <div class="d-flex justify-content-between gap-3 small mb-2">
+            <span>{{ item.quantity }} × {{ item.product.title }}</span>
+            <span class="text-nowrap">{{ item.line_total|bdt }}</span>
+          </div>
+        {% endfor %}
+        <hr>
+        <div class="d-flex justify-content-between fw-bold">
+          <span>Total</span><span>{{ total|bdt }}</span>
+        </div>
+        <a href="{% url 'store:cart_detail' %}" class="d-inline-block small mt-3">← Edit cart</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

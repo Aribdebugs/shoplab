@@ -49,15 +49,46 @@
 
 <section>
   <h2 class="h4 mb-3">Reviews</h2>
+
+  {% if can_review %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="h6 mb-3">Write a review</h3>
+        <form method="post" action="{% url 'store:add_review' product.slug %}">
+          {% csrf_token %}
+          <div class="mb-2" style="max-width: 160px;">
+            <label class="form-label small" for="{{ review_form.rating.id_for_label }}">Rating</label>
+            {{ review_form.rating }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small" for="{{ review_form.comment.id_for_label }}">Comment</label>
+            {{ review_form.comment }}
+          </div>
+          <button type="submit" class="btn btn-dark">Submit review</button>
+        </form>
+      </div>
+    </div>
+  {% elif already_reviewed %}
+    <p class="small text-success mb-4">You've reviewed this product. Thank you!</p>
+  {% elif user.is_authenticated %}
+    <p class="small text-muted mb-4">Only customers who bought this product can review it.</p>
+  {% else %}
+    <p class="small mb-4">
+      <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Log in to write a review</a>
+    </p>
+  {% endif %}
   {% for review in reviews %}
     <div class="card mb-3 shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between">
-          <strong>{{ review.reviewer_name }}</strong>
+          <div>
+            <strong>{{ review.reviewer_name }}</strong>
+            {% if review.is_verified %}<span class="badge bg-success ms-2">✓ Verified buyer</span>{% endif %}
+          </div>
           <small class="text-muted">{{ review.created_at|date:"M j, Y" }}</small>
         </div>
         <div class="text-warning small">{{ review.rating }} ★</div>
-        <p class="mb-0 mt-2">{{ review.comment }}</p>
+        <p class="mb-0 mt-2">{{ review.comment|linebreaksbr }}</p>
       </div>
     </div>
   {% empty %}

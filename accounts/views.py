@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.shortcuts import redirect, render
 
 from .forms import SignUpForm
@@ -30,4 +31,7 @@ def signup(request):
 @login_required
 def account(request):
     """Only logged-in users can see this. Others are redirected to the login page."""
-    return render(request, "accounts/account.html")
+    # item_count = total quantity per order, counted by the database in the same query
+    # (calling order.items.count in the template would run one query per order)
+    orders = request.user.orders.annotate(item_count=Sum("items__quantity"))   # related_name="orders"
+    return render(request, "accounts/account.html", {"orders": orders})

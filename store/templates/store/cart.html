@@ -57,7 +57,7 @@
       <a href="{% url 'store:product_list' %}">← Continue shopping</a>
       <div class="text-end">
         <div class="h5 mb-2">Total: <strong>{{ total|bdt }}</strong></div>
-        <button class="btn btn-dark" disabled>Checkout (coming Day 6)</button>
+        <a class="btn btn-dark" href="{% url 'orders:checkout' %}">Proceed to checkout</a>
       </div>
     </div>
   </div>
