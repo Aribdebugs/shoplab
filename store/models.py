@@ -91,7 +91,18 @@ class Review(models.Model):
             models.CheckConstraint(
                 condition=models.Q(rating__gte=1, rating__lte=5), name="review_rating_1_to_5"
             ),
+            # One review per user per product. Imported reviews (user=None) are exempt.
+            models.UniqueConstraint(
+                fields=["product", "user"],
+                condition=models.Q(user__isnull=False),
+                name="one_review_per_user_per_product",
+            ),
         ]
 
     def __str__(self):
         return f"{self.rating}★ by {self.reviewer_name} on {self.product}"
+
+    @property
+    def is_verified(self):
+        """Reviews from real accounts come only from verified buyers."""
+        return self.user_id is not None
