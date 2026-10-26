@@ -20,7 +20,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_editable = ["status"]    # change status straight from the list
     list_select_related = ["user"]
     search_fields = ["=id", "full_name", "phone"]   # "=id": exact match, so "1" doesn't find 10, 11...
-    readonly_fields = ["user", "total", "payment_method", "created_at"]
+    readonly_fields = ["user", "total", "exchange_rate", "payment_method", "created_at"]
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
 

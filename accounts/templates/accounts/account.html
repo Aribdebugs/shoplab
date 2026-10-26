@@ -45,7 +45,7 @@
                     <td><a href="{{ order.get_absolute_url }}">#{{ order.id }}</a></td>
                     <td class="text-nowrap">{{ order.created_at|date:"M j, Y" }}</td>
                     <td>{{ order.item_count }}</td>
-                    <td class="text-nowrap">{{ order.total|bdt }}</td>
+                    <td class="text-nowrap">{{ order.total|bdt_at:order.exchange_rate }}</td>
                     <td><span class="badge bg-{{ order.status_color }}">{{ order.get_status_display }}</span></td>
                   </tr>
                 {% endfor %}

@@ -35,6 +35,11 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, default="cod", editable=False)  # Cash on Delivery
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     total = models.DecimalField(max_digits=12, decimal_places=2)
+    # Snapshot, like unit_price: the taka amounts on this order must not move with tomorrow's rate
+    exchange_rate = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True, editable=False,
+        help_text="USD→BDT rate at the moment the order was placed",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

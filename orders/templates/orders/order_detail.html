@@ -10,7 +10,12 @@
   <h1 class="h3 mb-0">Order #{{ order.id }}</h1>
   <span class="badge bg-{{ order.status_color }}">{{ order.get_status_display }}</span>
 </div>
-<p class="text-muted mb-4">Placed {{ order.created_at|date:"M j, Y, g:i a" }}</p>
+<p class="text-muted mb-4">
+  Placed {{ order.created_at|date:"M j, Y, g:i a" }}
+  {% if order.exchange_rate %}
+    <span class="small">· prices at the rate on that day ($1 = ৳{{ order.exchange_rate|floatformat:2 }})</span>
+  {% endif %}
+</p>
 
 <div class="row g-4">
   <div class="col-lg-8">
@@ -35,16 +40,16 @@
                     {{ item.product_title }}   {# product deleted since: the snapshot title still shows #}
                   {% endif %}
                 </td>
-                <td class="text-nowrap">{{ item.unit_price|bdt }}</td>
+                <td class="text-nowrap">{{ item.unit_price|bdt_at:order.exchange_rate }}</td>
                 <td>{{ item.quantity }}</td>
-                <td class="text-nowrap text-end">{{ item.line_total|bdt }}</td>
+                <td class="text-nowrap text-end">{{ item.line_total|bdt_at:order.exchange_rate }}</td>
               </tr>
             {% endfor %}
           </tbody>
           <tfoot>
             <tr class="fw-bold">
               <td colspan="3">Total</td>
-              <td class="text-nowrap text-end">{{ order.total|bdt }}</td>
+              <td class="text-nowrap text-end">{{ order.total|bdt_at:order.exchange_rate }}</td>
             </tr>
           </tfoot>
         </table>

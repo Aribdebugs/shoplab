@@ -92,6 +92,24 @@ class CheckoutTests(TestCase):
         self.client.force_login(other)
         self.assertEqual(self.client.get(order.get_absolute_url()).status_code, 404)
 
+    def test_order_saves_exchange_rate(self):
+        self.place_order(2)
+        self.assertEqual(Order.objects.get().exchange_rate, Decimal("120"))
+
+    def test_order_taka_amount_survives_rate_change(self):
+        self.place_order(2)
+        order = Order.objects.get()
+        cache.set(CACHE_KEY, Decimal("200"), None)   # the live rate moves after the order
+        response = self.client.get(order.get_absolute_url())
+        self.assertContains(response, "৳21,600")      # 180.00 × 120, the rate at checkout
+        self.assertNotContains(response, "৳36,000")   # 180.00 × 200 would be wrong
+
+    def test_order_without_saved_rate_shows_usd(self):
+        self.place_order(2)
+        order = Order.objects.get()
+        Order.objects.filter(id=order.id).update(exchange_rate=None)   # e.g. API was down at checkout
+        self.assertContains(self.client.get(order.get_absolute_url()), "$180.00")
+
     def test_account_page_lists_orders(self):
         self.place_order(2)
         response = self.client.get(reverse("accounts:account"))

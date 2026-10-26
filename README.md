@@ -41,7 +41,7 @@ analysis and a shopping assistant) coming in my next projects.
 Python · Django 5.2 · SQLite · Bootstrap 5 · Django test framework
 
 ## 🧪 Tests
-50 automated tests covering products, search, filtering, sorting, pagination, currency conversion,
+53 automated tests covering products, search, filtering, sorting, pagination, currency conversion,
 cart, checkout, stock rollback, permissions, accounts and reviews.
 ```bash
 python manage.py test

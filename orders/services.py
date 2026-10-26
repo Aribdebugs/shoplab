@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import F
 
+from store.currency import get_usd_to_bdt
 from store.models import Product
 
 from .models import Order, OrderItem
@@ -38,7 +39,8 @@ def create_order(user, cart, shipping_data):
         (products[item["product"].id].discounted_price * item["quantity"] for item in cart_items),
         Decimal("0.00"),
     )
-    order = Order.objects.create(user=user, total=total, **shipping_data)
+    # exchange_rate is None if the rate API is down; the order pages then show USD
+    order = Order.objects.create(user=user, total=total, exchange_rate=get_usd_to_bdt(), **shipping_data)
 
     for item in cart_items:
         product = products[item["product"].id]
