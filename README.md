@@ -73,13 +73,17 @@ shoplab/
 ```
 
 ## 📸 Screenshots
-| Product page | Cart | Checkout |
-|---|---|---|
-| ![Product page](docs/screenshots/product.png) | ![Cart](docs/screenshots/cart.png) | ![Checkout](docs/screenshots/checkout.png) |
-
-| Order confirmation | Admin: orders |
+| Product page with a verified-buyer review | Writing a review (buyers only) |
 |---|---|
-| ![Order confirmation](docs/screenshots/order.png) | ![Admin order list](docs/screenshots/admin.png) |
+| ![Product page with a verified-buyer review](docs/screenshots/product.png) | ![Review form](docs/screenshots/review.png) |
+
+| Cart | Order confirmation |
+|---|---|
+| ![Cart](docs/screenshots/cart.png) | ![Order confirmation](docs/screenshots/order.png) |
+
+**Admin: orders with status filters and inline status editing**
+
+![Admin order list](docs/screenshots/admin.png)
 
 ## 📝 Notes
 - Product data comes from [DummyJSON](https://dummyjson.com) (fake demo data).
